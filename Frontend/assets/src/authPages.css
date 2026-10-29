@@ -1,0 +1,70 @@
+.auth-page {
+  box-sizing: border-box;
+  min-height: 100vh !important;
+  min-height: 100svh !important;
+  padding: clamp(12px, 4vw, 24px) !important;
+}
+
+.auth-card {
+  box-sizing: border-box !important;
+  width: min(100%, 440px) !important;
+  max-width: 440px !important;
+  padding: clamp(20px, 5vw, 28px) !important;
+}
+
+.auth-card input:not([type='radio']):not([type='checkbox']),
+.auth-card select,
+.auth-card textarea {
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.auth-card input,
+.auth-card select {
+  min-height: 44px;
+}
+
+.auth-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px !important;
+}
+
+.auth-actions button {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 44px;
+  line-height: 1.3;
+}
+
+.auth-card form > button {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    align-items: flex-start !important;
+    padding: 14px !important;
+  }
+
+  .auth-card {
+    margin: auto 0;
+  }
+
+  .auth-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 350px) {
+  .auth-page {
+    padding: 10px !important;
+  }
+
+  .auth-card {
+    padding: 18px !important;
+  }
+}
