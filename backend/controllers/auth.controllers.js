@@ -178,3 +178,9 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({ message: "Reset password error" });
     }
 }
+// Google authentication placeholder
+export const googleAuth = async (req, res) => {
+    return res.status(501).json({
+        message: "Google authentication is not configured yet."
+    });
+};
