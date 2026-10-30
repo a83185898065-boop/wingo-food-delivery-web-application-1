@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 // Backend directory
 const backendDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-// Environment variables
+// Load environment variables
 dotenv.config({
     path: path.join(backendDirectory, '.env')
 });
@@ -28,7 +28,7 @@ import orderRouter from './routes/order.routes.js';
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Frontend URL configuration
+// Frontend URL
 const frontendUrl = process.env.FRONTEND_URL?.trim();
 
 const frontendOrigin = frontendUrl
@@ -37,12 +37,13 @@ const frontendOrigin = frontendUrl
             ? frontendUrl
             : `https://${frontendUrl}`
     ).origin
-    : 'https://wingo-food-delivery-web-application-1.onrender.com';
+    : 'https://frontend-jlha.onrender.com';
 
-// Allowed origins
+// Allowed frontend origins
 const allowedOrigins = new Set([
     'http://localhost:5173',
     'http://localhost:3000',
+    'https://frontend-jlha.onrender.com',
     frontendOrigin
 ]);
 
@@ -54,7 +55,10 @@ app.use(cors({
         }
 
         console.error('Blocked CORS origin:', origin);
-        return callback(new Error(`CORS origin is not allowed: ${origin}`));
+
+        return callback(
+            new Error(`CORS origin is not allowed: ${origin}`)
+        );
     },
     credentials: true
 }));
@@ -68,7 +72,7 @@ app.use(cookieParser());
 app.get('/', (req, res) => {
     res.status(200).json({
         success: true,
-        message: 'Welcome to Wingoo Backend API 🚀',
+        message: 'Welcome to Wingoo Backend API',
         status: 'Running'
     });
 });
@@ -82,7 +86,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Uploads folder
+// Static uploads
 app.use(
     '/uploads',
     express.static(path.join(backendDirectory, 'uploads'))
@@ -123,10 +127,11 @@ const startServer = async () => {
         await connectDB();
 
         app.listen(port, () => {
-            console.log(`🚀 Wingoo Backend running on port ${port}`);
+            console.log(`Wingoo Backend running on port ${port}`);
             console.log('MongoDB connected successfully');
-            console.log(`Frontend allowed: ${frontendOrigin}`);
+            console.log(`Allowed frontend: ${frontendOrigin}`);
         });
+
     } catch (error) {
         console.error('Failed to start Wingoo Backend:', error);
         process.exit(1);
