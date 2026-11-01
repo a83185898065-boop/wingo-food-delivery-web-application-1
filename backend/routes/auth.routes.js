@@ -13,27 +13,25 @@ import {
 
 const authRouter = express.Router();
 
-// Signup
+// User Signup
 authRouter.post("/signup", signup);
 
-// Signin
+// User Signin
 authRouter.post("/signin", signin);
 
-// Signout
+// User Signout
 authRouter.get("/signout", signout);
 
-// Google Authentication
+// Firebase Google Authentication
 authRouter.post("/google", googleAuth);
 
-authRouter.get("/google", (req, res) => {
-    return res.status(501).json({
-        message: "Google OAuth is not configured yet."
-    });
-});
-
-// OTP Routes
+// Send OTP
 authRouter.post("/send-otp", sendotp);
+
+// Verify OTP
 authRouter.post("/verify-otp", verifyotp);
+
+// Reset Password
 authRouter.post("/reset-otp", resetPassword);
 
 export default authRouter;

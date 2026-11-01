@@ -1,4 +1,5 @@
-
+import { getAuth } from "firebase-admin/auth";
+import firebaseApp from "../config/firebaseAdmin.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import gentoken from "../utils/gentoken.js";
@@ -10,24 +11,34 @@ export const signup = async (req, res) => {
     try {
         const { fullName, email, password, mobile, role } = req.body;
 
-        const city = typeof req.body.city === 'string'
+        const normalizedEmail = email?.trim().toLowerCase();
+
+        const city = typeof req.body.city === "string"
             ? req.body.city.trim()
-            : '';
+            : "";
 
-        const state = typeof req.body.state === 'string'
+        const state = typeof req.body.state === "string"
             ? req.body.state.trim()
-            : '';
+            : "";
 
-        if (
-            role === 'deliveryBoy' &&
-            (!city || !state || city.length > 80 || state.length > 80)
-        ) {
+        if (!fullName || !normalizedEmail || !password || !mobile) {
             return res.status(400).json({
-                message: 'City and state (up to 80 characters each) are required for delivery partners.',
+                message: "All required fields must be provided"
             });
         }
 
-        const existingUser = await User.findOne({ email });
+        if (
+            role === "deliveryBoy" &&
+            (!city || !state || city.length > 80 || state.length > 80)
+        ) {
+            return res.status(400).json({
+                message: "City and state are required for delivery partners"
+            });
+        }
+
+        const existingUser = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (existingUser) {
             return res.status(400).json({
@@ -51,12 +62,12 @@ export const signup = async (req, res) => {
 
         const newUser = await User.create({
             fullName,
-            email,
+            email: normalizedEmail,
             mobile,
             role,
             city,
             state,
-            password: hashpassword,
+            password: hashpassword
         });
 
         const token = await gentoken(newUser._id);
@@ -68,13 +79,13 @@ export const signup = async (req, res) => {
         }
 
         const cookieOptions = {
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            httpOnly: true,
+            httpOnly: true
         };
 
-        res.cookie('token', token, cookieOptions);
+        res.cookie("token", token, cookieOptions);
 
         return res.status(201).json({
             message: "User created successfully",
@@ -82,10 +93,10 @@ export const signup = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Signup error:', error);
+        console.error("Signup error:", error);
 
         return res.status(500).json({
-            message: "sign up error"
+            message: "Sign up error"
         });
     }
 };
@@ -97,11 +108,27 @@ export const signin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email?.trim().toLowerCase();
+
+        if (!normalizedEmail || !password) {
+            return res.status(400).json({
+                message: "Email and password are required"
+            });
+        }
+
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (!user) {
             return res.status(400).json({
                 message: "User not found"
+            });
+        }
+
+        if (!user.password) {
+            return res.status(400).json({
+                message: "Please sign in using Google"
             });
         }
 
@@ -121,14 +148,14 @@ export const signin = async (req, res) => {
             });
         }
 
-        const cookieOptionsSignin = {
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        const cookieOptions = {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            httpOnly: true,
+            httpOnly: true
         };
 
-        res.cookie('token', token, cookieOptionsSignin);
+        res.cookie("token", token, cookieOptions);
 
         return res.status(200).json({
             message: "User signed in successfully",
@@ -136,7 +163,7 @@ export const signin = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Signin error:', error);
+        console.error("Signin error:", error);
 
         return res.status(500).json({
             message: "Signin error"
@@ -149,11 +176,11 @@ export const signin = async (req, res) => {
 
 export const signout = async (req, res) => {
     try {
-        res.clearCookie('token', {
-            path: '/',
+        res.clearCookie("token", {
+            path: "/",
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
         });
 
         return res.status(200).json({
@@ -161,7 +188,7 @@ export const signout = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Signout error:', error);
+        console.error("Signout error:", error);
 
         return res.status(500).json({
             message: "Signout error"
@@ -175,8 +202,11 @@ export const signout = async (req, res) => {
 export const sendotp = async (req, res) => {
     try {
         const { email } = req.body;
+        const normalizedEmail = email?.trim().toLowerCase();
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (!user) {
             return res.status(400).json({
@@ -192,37 +222,37 @@ export const sendotp = async (req, res) => {
 
         await user.save();
 
-        const devMode = process.env.NODE_ENV !== 'production';
+        const devMode = process.env.NODE_ENV !== "production";
 
         if (devMode) {
-            console.log(`[DEV OTP] ${email} -> ${otp}`);
+            console.log(`[DEV OTP] ${normalizedEmail} -> ${otp}`);
         }
 
         try {
-            await sendotpMail(email, otp);
+            await sendotpMail(normalizedEmail, otp);
 
             return res.status(200).json({
                 message: "OTP sent successfully",
-                ...(devMode ? { debugOtp: otp } : {}),
+                ...(devMode ? { debugOtp: otp } : {})
             });
 
         } catch (error) {
-            console.error('Send OTP error:', error);
+            console.error("Send OTP email error:", error);
 
             if (devMode) {
                 return res.status(200).json({
-                    message: `OTP email failed: ${error.message}. Use code ${otp} instead.`,
-                    fallbackOtp: otp,
+                    message: "OTP email failed. Use the fallback OTP.",
+                    fallbackOtp: otp
                 });
             }
 
             return res.status(500).json({
-                message: error?.message || "Send OTP error"
+                message: "Send OTP error"
             });
         }
 
     } catch (error) {
-        console.error('Send OTP error:', error);
+        console.error("Send OTP error:", error);
 
         return res.status(500).json({
             message: "Send OTP error"
@@ -237,7 +267,11 @@ export const verifyotp = async (req, res) => {
     try {
         const { email, otp } = req.body;
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email?.trim().toLowerCase();
+
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (
             !user ||
@@ -261,7 +295,7 @@ export const verifyotp = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Verify OTP error:', error);
+        console.error("Verify OTP error:", error);
 
         return res.status(500).json({
             message: "OTP verification error"
@@ -276,7 +310,11 @@ export const resetPassword = async (req, res) => {
     try {
         const { email, newpassword } = req.body;
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email?.trim().toLowerCase();
+
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
 
         if (!user || !user.isotpverified) {
             return res.status(400).json({
@@ -294,6 +332,8 @@ export const resetPassword = async (req, res) => {
 
         user.password = hashedPassword;
         user.isotpverified = false;
+        user.resetotp = undefined;
+        user.otpExpires = undefined;
 
         await user.save();
 
@@ -302,7 +342,7 @@ export const resetPassword = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Reset password error:', error);
+        console.error("Reset password error:", error);
 
         return res.status(500).json({
             message: "Reset password error"
@@ -313,10 +353,104 @@ export const resetPassword = async (req, res) => {
 
 // ================= GOOGLE AUTH =================
 
-// Google OAuth is not implemented yet.
-
 export const googleAuth = async (req, res) => {
-    return res.status(501).json({
-        message: "Google authentication is not configured yet."
-    });
+    try {
+        const { idToken } = req.body;
+
+        if (!idToken || typeof idToken !== "string") {
+            return res.status(400).json({
+                message: "Google ID token is required"
+            });
+        }
+
+        // Verify Firebase ID token
+        const decodedToken = await getAuth(firebaseApp).verifyIdToken(idToken);
+
+        const {
+            uid,
+            email,
+            name,
+            email_verified
+        } = decodedToken;
+
+        if (!uid || !email || !email_verified) {
+            return res.status(401).json({
+                message: "Google email verification failed"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        // Find account by Firebase UID or email
+        let user = await User.findOne({
+            $or: [
+                { firebaseUid: uid },
+                { email: normalizedEmail }
+            ]
+        });
+
+        if (user) {
+
+            // Prevent linking a different Firebase account
+            if (user.firebaseUid && user.firebaseUid !== uid) {
+                return res.status(409).json({
+                    message: "This email is linked to another Google account"
+                });
+            }
+
+            // Link Firebase UID to existing account
+            if (!user.firebaseUid) {
+                user.firebaseUid = uid;
+                await user.save();
+            }
+
+        } else {
+
+            // Create new Google registered user
+            user = await User.create({
+                fullName: name || normalizedEmail.split("@")[0],
+                email: normalizedEmail,
+                firebaseUid: uid,
+                role: "user"
+            });
+
+        }
+
+        // Generate Wingoo JWT
+        const token = await gentoken(user._id);
+
+        if (!token) {
+            return res.status(500).json({
+                message: "Token generation failed"
+            });
+        }
+
+        const cookieOptions = {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            httpOnly: true
+        };
+
+        res.cookie("token", token, cookieOptions);
+
+        return res.status(200).json({
+            message: "Google authentication successful",
+            token,
+            user: {
+                _id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                mobile: user.mobile || "",
+                role: user.role
+            }
+        });
+
+    } catch (error) {
+        console.error("Google authentication error:", error);
+
+        return res.status(401).json({
+            message: "Google authentication failed"
+        });
+    }
 };
